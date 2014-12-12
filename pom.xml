@@ -23,6 +23,15 @@
             <scope>provided</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.3.6</version>
+        </dependency>
+
+
+        <!-- Test dependencies ====================  -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -43,7 +52,6 @@
             <version>1.10.8</version>
             <scope>test</scope>
         </dependency>
-
 
     </dependencies>
 
