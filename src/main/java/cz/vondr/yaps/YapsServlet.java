@@ -21,7 +21,7 @@ public class YapsServlet extends HttpServlet {
 
     protected CloseableHttpClient httpClient;
 
-    protected String target = "localhots:8080";
+//    protected String target = "localhost:8080";
 
     @Override
     public void init() throws ServletException {
@@ -78,15 +78,20 @@ public class YapsServlet extends HttpServlet {
         CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost("twitter.com", 80), new BasicHttpEntityEnclosingRequest("GET", "http://twitter.com/jvondrous"));
         try {
             //TODO rewrite 'target response' to 'proxy response'
-            servletResponse.setStatus(200);
+            servletResponse.setStatus(httpResponse.getStatusLine().getStatusCode());
 //            servletResponse.getOutputStream().print("Hello YapsServlet");
 
             httpResponse.getEntity().writeTo(servletResponse.getOutputStream());
+
+
 //            servletResponse.getOutputStream()
 //            httpResponse.getEntity().getContent()
 
         } finally {
             httpResponse.close();
+            servletResponse.getOutputStream().flush();
+            servletResponse.getOutputStream().close();
+
         }
 
 
