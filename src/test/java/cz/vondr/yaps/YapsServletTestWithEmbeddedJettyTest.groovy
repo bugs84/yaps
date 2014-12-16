@@ -12,7 +12,11 @@ import org.eclipse.jetty.servlet.ServletHolder
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.vertx.java.core.Handler
+import org.vertx.java.core.Vertx
 import org.vertx.java.core.VertxFactory
+import org.vertx.java.core.buffer.Buffer
+import org.vertx.java.core.http.HttpClientResponse
 
 class YapsServletTestWithEmbeddedJettyTest {
 
@@ -70,18 +74,59 @@ class YapsServletTestWithEmbeddedJettyTest {
         vertx.createHttpServer().requestHandler { req ->
             req.response().headers().set("Content-Type", "text/plain");
             req.response().end("Hello World");
-        }.listen(8080)
+        }.listen(8080);
 
 
+
+        httpComponentsHttpRequest()
+
+
+        vertXClientHttpRequest(vertx)
+
+
+
+
+        vertx.stop()
+
+        int i = 0
+    }
+
+    private void httpComponentsHttpRequest() {
+        //HttpComponents - request
         CloseableHttpClient httpclient = HttpClients.createDefault()
         HttpGet httpget = new HttpGet("http://localhost:8080/")
         CloseableHttpResponse response = httpclient.execute(httpget)
 
         def content = EntityUtils.toString(response.getEntity());
-
         assert content == "Hello World"
-        vertx.stop()
-        int i = 0
+    }
+
+    private void vertXClientHttpRequest(Vertx vertx) {
+        //VertX Client - request
+        def client = vertx.createHttpClient().setHost("localhost").setPort(8080)
+        client.request("GET", "trantada", new Handler<HttpClientResponse>() {
+            @Override
+            void handle(HttpClientResponse resp) {
+                println "VertX - ${resp.statusCode()}"
+                resp.bodyHandler(new Handler<Buffer>() {
+                    @Override
+                    void handle(Buffer buffer) {
+                        def content = buffer.toString()
+                        assert content == "Hello World"
+                        println "VertX - $content"
+                    }
+                })
+
+            }
+        }).end()
+
+        //                    client.request("GET", "") { resp ->
+        //                        println "Got a response: ${resp.statusCode}"
+        //                    }
+        //                    .end()
+        Thread.sleep(2000)
+
+        //        System.in.read(new byte[1])
     }
 
 
