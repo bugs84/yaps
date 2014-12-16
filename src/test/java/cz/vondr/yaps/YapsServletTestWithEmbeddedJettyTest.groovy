@@ -12,6 +12,7 @@ import org.eclipse.jetty.servlet.ServletHolder
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.vertx.java.core.VertxFactory
 
 class YapsServletTestWithEmbeddedJettyTest {
 
@@ -61,6 +62,26 @@ class YapsServletTestWithEmbeddedJettyTest {
 
         assert content.size() > 10
 
+    }
+
+    @Test
+    void 'vertx server'() {
+        def vertx = VertxFactory.newVertx()
+        vertx.createHttpServer().requestHandler { req ->
+            req.response().headers().set("Content-Type", "text/plain");
+            req.response().end("Hello World");
+        }.listen(8080)
+
+
+        CloseableHttpClient httpclient = HttpClients.createDefault()
+        HttpGet httpget = new HttpGet("http://localhost:8080/")
+        CloseableHttpResponse response = httpclient.execute(httpget)
+
+        def content = EntityUtils.toString(response.getEntity());
+
+        assert content == "Hello World"
+        vertx.stop()
+        int i = 0
     }
 
 
