@@ -1,4 +1,5 @@
 package cz.vondr.yaps
+
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
@@ -11,15 +12,38 @@ import org.eclipse.jetty.servlet.ServletHolder
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.vertx.java.core.Handler
+import org.vertx.java.core.Vertx
+import org.vertx.java.core.VertxFactory
+import org.vertx.java.core.http.HttpServer
+import org.vertx.java.core.http.HttpServerRequest
 
-class YapsServletTestWithEmbeddedJettyTest {
+class YapsServletJettyAndVertXTest {
 
     protected Server proxyServer
     protected int proxyPort
     protected String proxyUrl
 
+    protected Vertx targetVertx;
+    protected HttpServer targetServer
+    protected int targetPort = 25842
+    protected Handler<HttpServerRequest> targetHandler
+
+
     @Before
     void setup() {
+        setupTarget()
+        setupProxy()
+    }
+
+    void setupTarget() {
+        targetVertx = VertxFactory.newVertx()
+        targetServer = targetVertx.createHttpServer().requestHandler { req ->
+            return targetHandler.handle(req)
+        }.listen(targetPort);
+    }
+
+    private void setupProxy() {
         proxyServer = new Server(0)
         ServletHandler handler = new ServletHandler()
         proxyServer.setHandler(handler)
@@ -30,21 +54,32 @@ class YapsServletTestWithEmbeddedJettyTest {
 
         proxyPort = ((ServerConnector) proxyServer.getConnectors()[0]).getLocalPort()
         proxyUrl = "http://localhost:$proxyPort/"
-
     }
 
     protected ServletHolder setupYapsServlet(ServletHandler handler) {
-        handler.addServletWithMapping(YapsServlet.class, "/*")
+        def servletHolder = new ServletHolder(new YapsServlet().setTargetHost("localhost").setTargetPort(targetPort))
+        handler.addServletWithMapping(servletHolder, "/*")
     }
 
     @After
     void tearDown() {
         proxyServer.stop()
+        targetVertx.stop()
 
     }
 
     @Test
     void 'jetty test'() {
+
+        targetHandler = { req ->
+            req.response()
+                    .putHeader("Content-Type", "text/plain")
+                    .setStatusCode(200)
+                    .end("Hello World 2");
+
+
+            int i = 0
+        }
 
 
         CloseableHttpClient httpclient = HttpClients.createDefault()
@@ -59,6 +94,7 @@ class YapsServletTestWithEmbeddedJettyTest {
         def content = EntityUtils.toString(response.getEntity());
 
         assert content.size() > 10
+        assert content == "Hello World 2"
 
     }
 

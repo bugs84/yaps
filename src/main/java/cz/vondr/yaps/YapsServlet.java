@@ -21,7 +21,27 @@ public class YapsServlet extends HttpServlet {
 
     protected CloseableHttpClient httpClient;
 
-//    protected String target = "localhost:8080";
+    protected String targetHost = "twitter.com";
+    protected int targetPort = 80;
+
+
+    public String getTargetHost() {
+        return targetHost;
+    }
+
+    public YapsServlet setTargetHost(String targetHost) {
+        this.targetHost = targetHost;
+        return this;
+    }
+
+    public int getTargetPort() {
+        return targetPort;
+    }
+
+    public YapsServlet setTargetPort(int targetPort) {
+        this.targetPort = targetPort;
+        return this;
+    }
 
     @Override
     public void init() throws ServletException {
@@ -75,7 +95,7 @@ public class YapsServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse servletResponse) throws ServletException, IOException {
-        CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost("twitter.com", 80), new BasicHttpEntityEnclosingRequest("GET", "http://twitter.com/jvondrous"));
+        CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost(targetHost, targetPort), new BasicHttpEntityEnclosingRequest("GET", "http://twitter.com/jvondrous"));
         try {
             //TODO rewrite 'target response' to 'proxy response'
             servletResponse.setStatus(httpResponse.getStatusLine().getStatusCode());
