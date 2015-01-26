@@ -1,4 +1,4 @@
-package cz.vondr.yaps
+package cz.vondr.yaps.test.incubator
 
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
@@ -13,15 +13,17 @@ import org.vertx.java.core.Vertx
 import org.vertx.java.core.VertxFactory
 import org.vertx.java.core.buffer.Buffer
 import org.vertx.java.core.http.HttpClientResponse
+import org.vertx.java.core.http.HttpServer
 
-class VertXTest {
+class VertXServerAndClientRequestTest {
 
-    protected Vertx vertx;
+    protected Vertx vertx
+    protected HttpServer vertxServer
 
     @Before
     void setup() {
         vertx = VertxFactory.newVertx()
-        vertx.createHttpServer().requestHandler { req ->
+        vertxServer = vertx.createHttpServer().requestHandler { req ->
             req.response().headers().set("Content-Type", "text/plain");
             req.response().end("Hello World");
         }.listen(8080);
@@ -30,7 +32,7 @@ class VertXTest {
 
     @After
     void tearDown() {
-        vertx.stop()
+        vertxServer.close()
     }
 
     @Test
