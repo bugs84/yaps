@@ -77,6 +77,7 @@ public class YapsServlet extends HttpServlet {
                 .setConnectionManager(connectionManager)
                 .disableCookieManagement()
                 .setKeepAliveStrategy(keepAliveStrategy)
+                .disableRedirectHandling()
                 .build();
 
 
