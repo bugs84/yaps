@@ -15,6 +15,9 @@ trait VertXTarget {
     int targetPort = 25842
     Handler<HttpServerRequest> targetHandler
 
+    int getTargetPort() {
+        targetPort
+    }
 
     @Before
     void setupATarget() {

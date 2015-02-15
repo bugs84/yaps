@@ -25,7 +25,7 @@ public class StatusCodeTest implements VertXTarget, JettyProxy {
     }
 
     @Test
-    void 'test response'() {
+    void 'status code is returned correctly'() {
         targetHandler = { req ->
             req.response()
                     .setStatusCode(statusCode)
