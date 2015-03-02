@@ -19,6 +19,8 @@ import java.io.IOException;
 
 public class YapsServlet extends HttpServlet {
 
+    //Note: Its possible to improve performance using Java 7 Channels
+
     protected CloseableHttpClient httpClient;
 
     protected String targetHost = "twitter.com";
@@ -80,6 +82,8 @@ public class YapsServlet extends HttpServlet {
                 .disableRedirectHandling()
                 .build();
 
+        //TODO read about  http.protocol.expect-continue http.protocol.expect-continue
+        //TODO read about  http.connection.stalecheck
 
     }
 
@@ -96,7 +100,9 @@ public class YapsServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse servletResponse) throws ServletException, IOException {
-        CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost(targetHost, targetPort), new BasicHttpEntityEnclosingRequest("GET", "http://twitter.com/jvondrous"));
+
+        String method = req.getMethod();
+        CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost(targetHost, targetPort), new BasicHttpEntityEnclosingRequest(method, "http://twitter.com/jvondrous"));
         try {
             //TODO rewrite 'target response' to 'proxy response'
             servletResponse.setStatus(httpResponse.getStatusLine().getStatusCode());
