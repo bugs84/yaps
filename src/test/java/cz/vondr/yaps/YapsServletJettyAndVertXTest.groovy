@@ -1,5 +1,4 @@
 package cz.vondr.yaps
-
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
@@ -64,8 +63,7 @@ class YapsServletJettyAndVertXTest {
     @After
     void tearDown() {
         proxyServer.stop()
-        targetVertx.stop()
-
+        targetServer.close()
     }
 
     @Test
@@ -82,9 +80,9 @@ class YapsServletJettyAndVertXTest {
         }
 
 
-        CloseableHttpClient httpclient = HttpClients.createDefault()
-        HttpGet httpget = new HttpGet(proxyUrl)
-        CloseableHttpResponse response = httpclient.execute(httpget)
+        CloseableHttpClient httpClient = HttpClients.createDefault()
+        HttpGet httpGet = new HttpGet(proxyUrl)
+        CloseableHttpResponse response = httpClient.execute(httpGet)
 
 
 
