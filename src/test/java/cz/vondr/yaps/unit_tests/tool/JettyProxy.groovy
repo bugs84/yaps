@@ -1,4 +1,4 @@
-package cz.vondr.yaps.test.tool
+package cz.vondr.yaps.unit_tests.tool
 import cz.vondr.yaps.YapsServlet
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.ServerConnector
@@ -30,7 +30,7 @@ trait JettyProxy {
     }
 
     private void setupYapsServlet(ServletHandler handler) {
-        def servletHolder = new ServletHolder(new YapsServlet().setTargetHost("localhost").setTargetPort(getTargetPort()))
+        def servletHolder = new ServletHolder(new YapsServlet().setTargetUri("http://localhost:${getTargetPort()}"))
         handler.addServletWithMapping(servletHolder, "/*")
     }
 

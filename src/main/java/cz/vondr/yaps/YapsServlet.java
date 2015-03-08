@@ -16,6 +16,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class YapsServlet extends HttpServlet {
 
@@ -23,26 +25,51 @@ public class YapsServlet extends HttpServlet {
 
     protected CloseableHttpClient httpClient;
 
+    protected String targetUri = "http://localhost:8080";
+
+    protected String targetSchema = "http";
     protected String targetHost = "twitter.com";
     protected int targetPort = 80;
+    protected HttpHost targetHttpHost = new HttpHost(targetHost, targetPort);
+    ;
 
+
+    public String getTargetSchema() {
+        return targetSchema;
+    }
 
     public String getTargetHost() {
         return targetHost;
-    }
-
-    public YapsServlet setTargetHost(String targetHost) {
-        this.targetHost = targetHost;
-        return this;
     }
 
     public int getTargetPort() {
         return targetPort;
     }
 
-    public YapsServlet setTargetPort(int targetPort) {
-        this.targetPort = targetPort;
+    public String getTargetUri() {
+        return targetUri;
+    }
+
+    /** for example "http://localhost:8080/context" */
+    public YapsServlet setTargetUri(String targetUri) {
+        //TODO unit_tests kdyz je zadany port i kdyz neni zadany port
+        //TODO bez portu pro http i pro https
+        this.targetUri = targetUri;
+        URI uri = parseUri(targetUri);
+        targetSchema = uri.getScheme();
+        targetHost = uri.getHost();
+        targetPort = uri.getPort();
+        targetHttpHost = new HttpHost(targetHost, targetPort, targetSchema);
         return this;
+    }
+
+    private URI parseUri(String targetUri) {
+        try {
+            return new URI(targetUri);
+        } catch (URISyntaxException e) {
+            //TODO unit_tests for throwing exception
+            throw new IllegalArgumentException(e);
+        }
     }
 
     @Override
@@ -99,29 +126,36 @@ public class YapsServlet extends HttpServlet {
 
 
     @Override
-    protected void service(HttpServletRequest req, HttpServletResponse servletResponse) throws ServletException, IOException {
-
-        String method = req.getMethod();
-        CloseableHttpResponse httpResponse = httpClient.execute(new HttpHost(targetHost, targetPort), new BasicHttpEntityEnclosingRequest(method, "http://twitter.com/jvondrous"));
+    protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //TODO unit_tests for https  (setup jetty with https)
+        String method = request.getMethod();
+        String rewrittenTargetUri = rewriteUri(request);
+        CloseableHttpResponse httpResponse = httpClient.execute(targetHttpHost, new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri));
         try {
             //TODO rewrite 'target response' to 'proxy response'
-            servletResponse.setStatus(httpResponse.getStatusLine().getStatusCode());
-//            servletResponse.getOutputStream().print("Hello YapsServlet");
+            response.setStatus(httpResponse.getStatusLine().getStatusCode());
+//            response.getOutputStream().print("Hello YapsServlet");
 
-            httpResponse.getEntity().writeTo(servletResponse.getOutputStream());
+            httpResponse.getEntity().writeTo(response.getOutputStream());
 
 
-//            servletResponse.getOutputStream()
+//            response.getOutputStream()
 //            httpResponse.getEntity().getContent()
 
         } finally {
             httpResponse.close();
-            servletResponse.getOutputStream().flush();
-            servletResponse.getOutputStream().close();
+            response.getOutputStream().flush();
+            response.getOutputStream().close();
 
         }
 
 
+    }
+
+    private String rewriteUri(HttpServletRequest request) {
+        //TODO tohle udelat - tohle je jen aby tu neco bylo. Ma to hodne mezer!
+        //Zajistit aby na konci target uri bylo/nebylo lomeno "/"
+        return targetUri + "/" + request.getPathInfo() + "?" + request.getQueryString() /*can be null!! */;
     }
 
 }

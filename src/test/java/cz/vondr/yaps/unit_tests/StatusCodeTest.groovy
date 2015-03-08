@@ -1,7 +1,7 @@
-package cz.vondr.yaps.test
+package cz.vondr.yaps.unit_tests
 
-import cz.vondr.yaps.test.tool.JettyProxy
-import cz.vondr.yaps.test.tool.VertXTarget
+import cz.vondr.yaps.unit_tests.tool.JettyProxy
+import cz.vondr.yaps.unit_tests.tool.VertXTarget
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
@@ -11,17 +11,12 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized.class)
-public class StatusCodeTest implements VertXTarget, JettyProxy {
+public abstract class StatusCodeTest implements VertXTarget, JettyProxy {
 
     int statusCode;
 
     StatusCodeTest(int statusCode) {
         this.statusCode = statusCode
-    }
-
-    @Parameterized.Parameters
-    public static Collection statusCodes() {
-        return 200..999
     }
 
     @Test

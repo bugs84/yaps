@@ -1,9 +1,9 @@
-package cz.vondr.yaps.test
+package cz.vondr.yaps.unit_tests
 
 import com.jcabi.http.Response
 import com.jcabi.http.request.ApacheRequest
-import cz.vondr.yaps.test.tool.JettyProxy
-import cz.vondr.yaps.test.tool.VertXTarget
+import cz.vondr.yaps.unit_tests.tool.JettyProxy
+import cz.vondr.yaps.unit_tests.tool.VertXTarget
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized

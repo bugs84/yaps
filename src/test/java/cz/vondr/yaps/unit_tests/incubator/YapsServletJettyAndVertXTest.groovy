@@ -1,4 +1,6 @@
-package cz.vondr.yaps
+package cz.vondr.yaps.unit_tests.incubator
+
+import cz.vondr.yaps.YapsServlet
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
@@ -56,7 +58,7 @@ class YapsServletJettyAndVertXTest {
     }
 
     protected ServletHolder setupYapsServlet(ServletHandler handler) {
-        def servletHolder = new ServletHolder(new YapsServlet().setTargetHost("localhost").setTargetPort(targetPort))
+        def servletHolder = new ServletHolder(new YapsServlet().setTargetUri("http://localhost:$targetPort"))
         handler.addServletWithMapping(servletHolder, "/*")
     }
 

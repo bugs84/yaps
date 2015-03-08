@@ -1,4 +1,4 @@
-package cz.vondr.yaps.test.tool
+package cz.vondr.yaps.unit_tests.tool
 
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet

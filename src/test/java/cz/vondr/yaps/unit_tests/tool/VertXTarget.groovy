@@ -1,4 +1,4 @@
-package cz.vondr.yaps.test.tool
+package cz.vondr.yaps.unit_tests.tool
 import org.junit.After
 import org.junit.Before
 import org.vertx.java.core.Handler
