@@ -78,6 +78,18 @@
             <version>1.10.3</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+            <version>1.18.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-client</artifactId>
+            <version>1.12</version>
+            <scope>test</scope>
+        </dependency>
 
 
     </dependencies>

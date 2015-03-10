@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 public class YapsServlet extends HttpServlet {
+    private static final char QUERY_DELIMITER = '?';
 
     //Note: Its possible to improve performance using Java 7 Channels
 
@@ -31,7 +32,6 @@ public class YapsServlet extends HttpServlet {
     protected String targetHost = "twitter.com";
     protected int targetPort = 80;
     protected HttpHost targetHttpHost = new HttpHost(targetHost, targetPort);
-    ;
 
 
     public String getTargetSchema() {
@@ -52,8 +52,6 @@ public class YapsServlet extends HttpServlet {
 
     /** for example "http://localhost:8080/context" */
     public YapsServlet setTargetUri(String targetUri) {
-        //TODO unit_tests kdyz je zadany port i kdyz neni zadany port
-        //TODO bez portu pro http i pro https
         this.targetUri = targetUri;
         URI uri = parseUri(targetUri);
         targetSchema = uri.getScheme();
@@ -67,7 +65,6 @@ public class YapsServlet extends HttpServlet {
         try {
             return new URI(targetUri);
         } catch (URISyntaxException e) {
-            //TODO unit_tests for throwing exception
             throw new IllegalArgumentException(e);
         }
     }
@@ -134,28 +131,29 @@ public class YapsServlet extends HttpServlet {
         try {
             //TODO rewrite 'target response' to 'proxy response'
             response.setStatus(httpResponse.getStatusLine().getStatusCode());
-//            response.getOutputStream().print("Hello YapsServlet");
 
             httpResponse.getEntity().writeTo(response.getOutputStream());
-
-
-//            response.getOutputStream()
-//            httpResponse.getEntity().getContent()
-
         } finally {
             httpResponse.close();
             response.getOutputStream().flush();
             response.getOutputStream().close();
-
         }
 
 
     }
 
     private String rewriteUri(HttpServletRequest request) {
-        //TODO tohle udelat - tohle je jen aby tu neco bylo. Ma to hodne mezer!
-        //Zajistit aby na konci target uri bylo/nebylo lomeno "/"
-        return targetUri + "/" + request.getPathInfo() + "?" + request.getQueryString() /*can be null!! */;
+        StringBuilder uri = new StringBuilder();//TODO init String builder size
+        uri.append(targetUri);
+        uri.append(request.getPathInfo());//TODO path info nefunguje spravne na WAS - napsat unit a upravit
+        String queryString = request.getQueryString();
+        if (queryString != null) {
+            uri.append(QUERY_DELIMITER).append(queryString);
+        }
+        return uri.toString();
+        //TODO test na uri s diakritikou
+
+        //TODO Zajistit aby na konci target uri bylo/nebylo lomeno "/"
     }
 
 }
