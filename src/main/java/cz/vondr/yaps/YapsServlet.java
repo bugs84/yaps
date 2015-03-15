@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Enumeration;
 
 public class YapsServlet extends HttpServlet {
     private static final char QUERY_DELIMITER = '?';
@@ -127,7 +128,11 @@ public class YapsServlet extends HttpServlet {
         //TODO unit_tests for https  (setup jetty with https)
         String method = request.getMethod();
         String rewrittenTargetUri = rewriteUri(request);
-        CloseableHttpResponse httpResponse = httpClient.execute(targetHttpHost, new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri));
+
+        //TODO rewrite headers into response
+        BasicHttpEntityEnclosingRequest targetRequest = new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri);
+        rewriteHeaders(request, targetRequest);
+        CloseableHttpResponse httpResponse = httpClient.execute(targetHttpHost, targetRequest);
         try {
             //TODO rewrite 'target response' to 'proxy response'
             response.setStatus(httpResponse.getStatusLine().getStatusCode());
@@ -139,6 +144,16 @@ public class YapsServlet extends HttpServlet {
             response.getOutputStream().close();
         }
 
+
+    }
+
+    private void rewriteHeaders(HttpServletRequest request, BasicHttpEntityEnclosingRequest targetRequest) {
+        Enumeration headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = (String) headerNames.nextElement();
+            String headerValue = request.getHeader(headerName);
+            targetRequest.addHeader(headerName, headerValue);
+        }
 
     }
 
