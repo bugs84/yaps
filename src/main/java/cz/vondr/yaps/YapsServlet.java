@@ -1,5 +1,6 @@
 package cz.vondr.yaps;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -132,19 +133,25 @@ public class YapsServlet extends HttpServlet {
         //TODO rewrite headers into response
         BasicHttpEntityEnclosingRequest targetRequest = new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri);
         rewriteHeaders(request, targetRequest);
-        CloseableHttpResponse httpResponse = httpClient.execute(targetHttpHost, targetRequest);
+        CloseableHttpResponse targetResponse = httpClient.execute(targetHttpHost, targetRequest);
         try {
             //TODO rewrite 'target response' to 'proxy response'
-            response.setStatus(httpResponse.getStatusLine().getStatusCode());
-
-            httpResponse.getEntity().writeTo(response.getOutputStream());
+            response.setStatus(targetResponse.getStatusLine().getStatusCode());
+            rewriteHeaders(targetResponse, response);
+            targetResponse.getEntity().writeTo(response.getOutputStream());
         } finally {
-            httpResponse.close();
+            targetResponse.close();
             response.getOutputStream().flush();
             response.getOutputStream().close();
         }
 
 
+    }
+
+    private void rewriteHeaders(CloseableHttpResponse targetResponse, HttpServletResponse response) {
+        for (Header header : targetResponse.getAllHeaders()) {
+            response.addHeader(header.getName(), header.getValue());
+        }
     }
 
     private void rewriteHeaders(HttpServletRequest request, BasicHttpEntityEnclosingRequest targetRequest) {
