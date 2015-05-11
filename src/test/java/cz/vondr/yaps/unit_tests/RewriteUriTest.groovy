@@ -1,5 +1,6 @@
 package cz.vondr.yaps.unit_tests
 
+import com.jcabi.http.Response
 import com.jcabi.http.request.JdkRequest
 import cz.vondr.yaps.unit_tests.tool.JettyProxy
 import cz.vondr.yaps.unit_tests.tool.VertXTarget
@@ -36,10 +37,12 @@ class RewriteUriTest implements VertXTarget, JettyProxy {
         targetHandler = { req ->
             assert req.path() == "/testing/path/to/file.jfe"
             assert req.uri() == "/testing/path/to/file.jfe"
-            req.response().end()
+            req.response().setStatusCode(204).end()
         }
 
-        new JdkRequest("$proxyUrl/testing/path/to/file.jfe").fetch()
+        Response response = new JdkRequest("$proxyUrl/testing/path/to/file.jfe").fetch()
+
+        assert response.status() == 204
     }
 
     @Test(timeout = 1000L)

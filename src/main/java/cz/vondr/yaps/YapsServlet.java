@@ -130,7 +130,6 @@ public class YapsServlet extends HttpServlet {
         String method = request.getMethod();
         String rewrittenTargetUri = rewriteUri(request);
 
-        //TODO rewrite headers into response
         BasicHttpEntityEnclosingRequest targetRequest = new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri);
         rewriteHeaders(request, targetRequest);
         CloseableHttpResponse targetResponse = httpClient.execute(targetHttpHost, targetRequest);
@@ -138,6 +137,7 @@ public class YapsServlet extends HttpServlet {
             //TODO rewrite 'target response' to 'proxy response'
             response.setStatus(targetResponse.getStatusLine().getStatusCode());
             rewriteHeaders(targetResponse, response);
+            //TODO test for rewriting body - from proxy request to target request and from target response to proxy response
             targetResponse.getEntity().writeTo(response.getOutputStream());
         } finally {
             targetResponse.close();
@@ -145,6 +145,8 @@ public class YapsServlet extends HttpServlet {
             response.getOutputStream().close();
         }
 
+
+        //TODO multi-part
 
     }
 

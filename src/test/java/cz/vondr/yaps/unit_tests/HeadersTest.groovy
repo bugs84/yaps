@@ -74,14 +74,6 @@ class HeadersTest implements VertXTarget, JettyProxy {
             response.end("", "UTF-8")
         }
 
-//        def responseHeaders = new JdkRequest("$proxyUrl").fetch().headers()
-//        assert responseHeaders.get("Header_key_1") == ["value  two"]
-
-        //there is no header "second_header_key" but there is header "Second_header_key"
-        //This capitalize header... But WHY????
-        //This is issue in JdkRequest? or somewhere????
-//        assert responseHeaders.get("second_header_key") == ["ValuE 2"]
-
         CloseableHttpClient httpClient = HttpClients.createDefault()
         HttpGet httpGet = new HttpGet(proxyUrl)
         CloseableHttpResponse response = httpClient.execute(httpGet)
