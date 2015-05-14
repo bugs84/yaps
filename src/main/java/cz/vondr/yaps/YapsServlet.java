@@ -1,16 +1,16 @@
 package cz.vondr.yaps;
 
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.conn.ConnectionKeepAliveStrategy;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHttpEntityEnclosingRequest;
-import org.apache.http.protocol.HttpContext;
+import yaps.apache.http.Header;
+import yaps.apache.http.HttpHost;
+import yaps.apache.http.HttpResponse;
+import yaps.apache.http.client.methods.CloseableHttpResponse;
+import yaps.apache.http.conn.ConnectionKeepAliveStrategy;
+import yaps.apache.http.impl.client.CloseableHttpClient;
+import yaps.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import yaps.apache.http.impl.client.HttpClients;
+import yaps.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import yaps.apache.http.message.BasicHttpEntityEnclosingRequest;
+import yaps.apache.http.protocol.HttpContext;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -160,8 +160,10 @@ public class YapsServlet extends HttpServlet {
         Enumeration headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = (String) headerNames.nextElement();
-            String headerValue = request.getHeader(headerName);
-            targetRequest.addHeader(headerName, headerValue);
+            Enumeration<String> headerValues = request.getHeaders(headerName);
+            while (headerValues.hasMoreElements()) {
+                targetRequest.addHeader(headerName, headerValues.nextElement());
+            }
         }
 
     }

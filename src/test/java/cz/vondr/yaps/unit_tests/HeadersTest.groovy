@@ -1,7 +1,5 @@
 package cz.vondr.yaps.unit_tests
-
 import com.jcabi.http.Response
-import com.jcabi.http.request.ApacheRequest
 import com.jcabi.http.request.JdkRequest
 import cz.vondr.yaps.unit_tests.tool.JettyProxy
 import cz.vondr.yaps.unit_tests.tool.VertXTarget
@@ -45,7 +43,7 @@ class HeadersTest implements VertXTarget, JettyProxy {
             req.response().end()
         }
 
-        new ApacheRequest("$proxyUrl")
+        new JdkRequest(proxyUrl)
                 .header("TestHeader", "Value 1")
                 .header("TestHeader", "Value 2")
                 .fetch()
