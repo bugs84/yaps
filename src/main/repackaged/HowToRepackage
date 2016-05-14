@@ -1,0 +1,12 @@
+download sources of http components 4.4.1
+
+-all classes from (all maven dependencies expect - commons-logging)
+httpclient
+httpcore
+commonscodec
+
+
+change package from org.apache.http to yaps.org.apache.http
+	-whole directory "org" rename into directory "yaps"
+	-text replace org.apache.http to yaps.apache.http
+	-text replace org.apache.commons.codec to yaps.apache.commons.codec

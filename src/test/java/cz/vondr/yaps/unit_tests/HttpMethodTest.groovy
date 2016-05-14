@@ -26,6 +26,7 @@ class HttpMethodTest implements VertXTarget, JettyProxy {
 //    @Ignore("TODO - fix this test - it seems, that here is something wrong with jcabi.")
     @Test(timeout = 1000L)
     void 'http method is resend correctly'() {
+        println method
         targetHandler = { req ->
             assert req.method() == method
             req.response().end()

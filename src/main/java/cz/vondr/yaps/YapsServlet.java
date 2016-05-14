@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class YapsServlet extends HttpServlet {
     private static final char QUERY_DELIMITER = '?';
@@ -150,22 +152,57 @@ public class YapsServlet extends HttpServlet {
 
     }
 
+
+    //TODO go through and check which headers should be in the list
+    //TODO make rewrite it into cleaner way
+    //TODO it must ignore case
+    protected static final Set<String> OMITED_HEADERS = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    static {
+        OMITED_HEADERS.add("Connection");
+        OMITED_HEADERS.add("Keep-Alive");
+        OMITED_HEADERS.add("Proxy-Authenticate");
+        OMITED_HEADERS.add("Proxy-Authorization");
+        OMITED_HEADERS.add("TE");
+        OMITED_HEADERS.add("Trailers");
+        OMITED_HEADERS.add("Transfer-Encoding");
+        OMITED_HEADERS.add("Upgrade");
+
+
+
+//        OMITED_HEADERS.add("Host");
+//        OMITED_HEADERS.add("User-Agent");
+//        OMITED_HEADERS.add("Accept-Encoding");
+//        OMITED_HEADERS.add("Content-Length"); //TODO content lenght to nejak cely rozbije... :-/
+    }
+    //TODO at redirect 30x (f.e. 302) header "Location" should not be rewrited as well, becouse there will be location header from this proxy (with its own location)
+
     private void rewriteHeaders(CloseableHttpResponse targetResponse, HttpServletResponse response) {
         for (Header header : targetResponse.getAllHeaders()) {
-            response.addHeader(header.getName(), header.getValue());
+            String headerName = header.getName();
+            //TODO test na velikost pismen
+            if (OMITED_HEADERS.contains(headerName)) {
+                continue;
+            }
+            response.addHeader(headerName, header.getValue());
         }
     }
 
     private void rewriteHeaders(HttpServletRequest request, BasicHttpEntityEnclosingRequest targetRequest) {
+        System.out.println("Rewriting response headers:");
         Enumeration headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = (String) headerNames.nextElement();
+            System.out.println("  "+headerName);
+            if (OMITED_HEADERS.contains(headerName)) {
+                continue;
+            }
             Enumeration<String> headerValues = request.getHeaders(headerName);
             while (headerValues.hasMoreElements()) {
-                targetRequest.addHeader(headerName, headerValues.nextElement());
+                String value = headerValues.nextElement();
+//                System.out.println("   " + headerName + ":" + value);
+                targetRequest.addHeader(headerName, value);
             }
         }
-
     }
 
     private String rewriteUri(HttpServletRequest request) {
