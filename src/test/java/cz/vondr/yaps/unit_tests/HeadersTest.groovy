@@ -1,11 +1,15 @@
 package cz.vondr.yaps.unit_tests
+
 import com.jcabi.http.Response
 import com.jcabi.http.request.JdkRequest
 import cz.vondr.yaps.unit_tests.tool.JettyProxy
 import cz.vondr.yaps.unit_tests.tool.VertXTarget
+import org.apache.http.Header
+import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.HttpClients
 import org.junit.Ignore
 import org.junit.Test
@@ -109,6 +113,34 @@ class HeadersTest implements VertXTarget, JettyProxy {
         //This capitalize header... But WHY????
         //This is issue in JdkRequest
         assert responseHeaders.get("second_header_key") == ["ValuE 2"]
+    }
+
+    @Test()
+    void 'response headers with different case sensitivity'() {
+        targetHandler = { req ->
+            def response = req.response()
+            response.headers()
+                    .add("Header_key_1", "value  one")
+                    .add("second_header_key", "ValuE 2")
+
+            response.end("", "UTF-8")
+        }
+
+        //apache http client must be used for this test, because JCabi change case sensitivity of headers :(
+        HttpClient client = HttpClientBuilder.create().build();
+        HttpGet get = new HttpGet("$proxyUrl");
+
+        CloseableHttpResponse response = client.execute(get)
+
+
+        Header[] firstHeader = response.getHeaders("Header_key_1")
+        assert firstHeader.size() == 1
+        assert firstHeader[0].name == "Header_key_1"
+        assert firstHeader[0].value == "value  one"
+        Header[] secondHeader = response.getHeaders("second_header_key")
+        assert secondHeader.size() == 1
+        assert secondHeader[0].name == "second_header_key"
+        assert secondHeader[0].value == "ValuE 2"
     }
 
     @Test(timeout = 1000L)
