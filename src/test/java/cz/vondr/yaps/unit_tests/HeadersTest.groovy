@@ -23,6 +23,7 @@ class HeadersTest implements VertXTarget, JettyProxy {
     }
 
     @Test(timeout = 1000L)
+    @Ignore("Not ascii characters in http headers are not guaranteed to work")
     void 'multiple headers with diacritics are resend to target'() {
         targetHandler = { req ->
             assert req.headers().get("Žluťoučký kůň úpěl ďábelské ódy 1") == "value1"
