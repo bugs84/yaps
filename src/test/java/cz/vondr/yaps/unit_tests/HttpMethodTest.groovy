@@ -1,9 +1,11 @@
 package cz.vondr.yaps.unit_tests
 
-import com.jcabi.http.Response
-import com.jcabi.http.request.ApacheRequest
 import cz.vondr.yaps.unit_tests.tool.JettyProxy
 import cz.vondr.yaps.unit_tests.tool.VertXTarget
+import cz.vondr.yaps.unit_tests.tool.http.HttpClientGenericHttpMethod
+import org.apache.http.HttpResponse
+import org.apache.http.client.HttpClient
+import org.apache.http.impl.client.HttpClientBuilder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -13,7 +15,8 @@ class HttpMethodTest implements VertXTarget, JettyProxy {
 
     @Parameterized.Parameters
     public static Collection statusCodes() {
-        ["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE", "PATCH", "CONNECT", "MY_OWN_METHOD"]
+        //TODO test for "CONNECT" method
+        ["GET", "POST", "HEAD", "OPTIONS", "PUT", "DELETE", "TRACE", "PATCH", "MY_OWN_METHOD"]
     }
 
     String method
@@ -22,8 +25,6 @@ class HttpMethodTest implements VertXTarget, JettyProxy {
         this.method = method
     }
 
-    //TODO fix this test
-//    @Ignore("TODO - fix this test - it seems, that here is something wrong with jcabi.")
     @Test(timeout = 1000L)
     void 'http method is resend correctly'() {
         targetHandler = { req ->
@@ -31,9 +32,18 @@ class HttpMethodTest implements VertXTarget, JettyProxy {
             req.response().end()
         }
 
-        Response response = new ApacheRequest("$proxyUrl")
-                .method(method)
-                .fetch()
+        println "Test for http mehtod '$method'"
+
+        //This is the way how JCabi calls different methods. Unfortunatelly this doesn't work
+//        Response response = new ApacheRequest("$proxyUrl")
+//                .method(method)
+//                .fetch()
+
+        HttpClient client = HttpClientBuilder.create().build();
+        def createdUri = URI.create("$proxyUrl")
+        HttpClientGenericHttpMethod httpRequest = new HttpClientGenericHttpMethod(createdUri, method);
+        HttpResponse response = client.execute(httpRequest);
     }
+
 
 }
