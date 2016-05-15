@@ -20,13 +20,15 @@ class VertXServerAndClientRequestTest {
     protected Vertx vertx
     protected HttpServer vertxServer
 
+    public static final int port = 8087
+
     @Before
     void setup() {
         vertx = VertxFactory.newVertx()
         vertxServer = vertx.createHttpServer().requestHandler { req ->
             req.response().headers().set("Content-Type", "text/plain");
             req.response().end("Hello World");
-        }.listen(8080);
+        }.listen(port);
 
     }
 
@@ -51,16 +53,17 @@ class VertXServerAndClientRequestTest {
     private void httpComponentsHttpRequest() {
         //HttpComponents - request
         CloseableHttpClient httpclient = HttpClients.createDefault()
-        HttpGet httpget = new HttpGet("http://localhost:8080/")
+        HttpGet httpget = new HttpGet("http://localhost:$port/")
         CloseableHttpResponse response = httpclient.execute(httpget)
 
         def content = EntityUtils.toString(response.getEntity());
         assert content == "Hello World"
+        response.close()
     }
 
     private void vertXClientHttpRequest(Vertx vertx) {
         //VertX Client - request
-        def client = vertx.createHttpClient().setHost("localhost").setPort(8080)
+        def client = vertx.createHttpClient().setHost("localhost").setPort(port)
         client.request("GET", "trantada", new Handler<HttpClientResponse>() {
             @Override
             void handle(HttpClientResponse resp) {
