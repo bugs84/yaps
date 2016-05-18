@@ -7,7 +7,9 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
+import org.vertx.java.core.AsyncResult
 import org.vertx.java.core.Handler
 import org.vertx.java.core.Vertx
 import org.vertx.java.core.VertxFactory
@@ -15,20 +17,33 @@ import org.vertx.java.core.buffer.Buffer
 import org.vertx.java.core.http.HttpClientResponse
 import org.vertx.java.core.http.HttpServer
 
+import java.util.concurrent.CountDownLatch
+
 class VertXServerAndClientRequestTest {
 
     protected Vertx vertx
     protected HttpServer vertxServer
 
-    public static final int port = 8087
+    public int port
 
     @Before
     void setup() {
+        findFreePort()
+
+        CountDownLatch serverRunningSignal = new CountDownLatch(1);
+
         vertx = VertxFactory.newVertx()
         vertxServer = vertx.createHttpServer().requestHandler { req ->
             req.response().headers().set("Content-Type", "text/plain");
             req.response().end("Hello World");
-        }.listen(port);
+        }.listen(port, new Handler<AsyncResult<HttpServer>>() {
+            @Override
+            void handle(AsyncResult<HttpServer> event) {
+                println "Listening on port $port"
+                serverRunningSignal.countDown()
+            }
+        });
+        serverRunningSignal.await()
 
     }
 
@@ -36,6 +51,14 @@ class VertXServerAndClientRequestTest {
     void tearDown() {
         vertxServer.close()
     }
+
+    private void findFreePort() {
+        ServerSocket socket = new ServerSocket(0);
+        port = socket.getLocalPort();
+        socket.close();
+        println "free port is $port"
+    }
+
 
     @Test
     void 'vertx server'() {
