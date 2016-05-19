@@ -180,7 +180,6 @@ public class YapsServlet extends HttpServlet {
         Enumeration headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = (String) headerNames.nextElement();
-            System.out.println("  " + headerName);
             if (OMITED_HEADERS.contains(headerName)) {
                 continue;
             } else if (HOST_HEADER.equalsIgnoreCase(headerName)) {
@@ -193,9 +192,7 @@ public class YapsServlet extends HttpServlet {
                 Enumeration<String> headerValues = request.getHeaders(headerName);
                 while (headerValues.hasMoreElements()) {
                     String value = headerValues.nextElement();
-                    //                System.out.println("   " + headerName + ":" + value);
                     targetRequest.addHeader(headerName, value);
-
                 }
             }
         }

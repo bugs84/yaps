@@ -1,5 +1,6 @@
 package cz.vondr.yaps.unit_tests.incubator
 
+import cz.vondr.yaps.unit_tests.tool.http.SocketUtil
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.CloseableHttpClient
@@ -7,9 +8,7 @@ import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
-import org.vertx.java.core.AsyncResult
 import org.vertx.java.core.Handler
 import org.vertx.java.core.Vertx
 import org.vertx.java.core.VertxFactory
@@ -28,7 +27,7 @@ class VertXServerAndClientRequestTest {
 
     @Before
     void setup() {
-        findFreePort()
+        port = SocketUtil.findFreePort()
 
         CountDownLatch serverRunningSignal = new CountDownLatch(1);
 
@@ -36,29 +35,17 @@ class VertXServerAndClientRequestTest {
         vertxServer = vertx.createHttpServer().requestHandler { req ->
             req.response().headers().set("Content-Type", "text/plain");
             req.response().end("Hello World");
-        }.listen(port, new Handler<AsyncResult<HttpServer>>() {
-            @Override
-            void handle(AsyncResult<HttpServer> event) {
-                println "Listening on port $port"
-                serverRunningSignal.countDown()
-            }
+        }.listen(port, { event ->
+            println "Listening on port $port"
+            serverRunningSignal.countDown()
         });
         serverRunningSignal.await()
-
     }
 
     @After
     void tearDown() {
         vertxServer.close()
     }
-
-    private void findFreePort() {
-        ServerSocket socket = new ServerSocket(0);
-        port = socket.getLocalPort();
-        socket.close();
-        println "free port is $port"
-    }
-
 
     @Test
     void 'vertx server'() {
