@@ -1,4 +1,4 @@
-package cz.vondr.yaps.unit_tests
+package cz.vondr.yaps.unit_tests.headers
 
 import com.jcabi.http.Response
 import com.jcabi.http.request.JdkRequest
