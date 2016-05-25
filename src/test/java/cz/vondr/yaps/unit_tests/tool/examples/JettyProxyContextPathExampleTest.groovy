@@ -14,15 +14,22 @@ class JettyProxyContextPathExampleTest implements VertXTarget, JettyProxy {
         "/proxy/"
     }
 
+    @Override
+    String getTargetContextPath() {
+        "/target"
+    }
+
     @Test(timeout = 1000L)
-    void 'proxy is setuped with context path'() {
+    void 'proxy and target have its context paths'() {
         targetHandler = { req ->
+            req.absoluteURI()
+            assert req.path() == "/target/index.html"
             HttpServerResponse response = req.response()
             response.end()
         }
 
         assert proxyUrl.contains("/proxy/")
-        Response response = new JdkRequest("$proxyUrl").fetch()
+        Response response = new JdkRequest("${proxyUrl}index.html").fetch()
 
         assert response.status() == 200
     }
