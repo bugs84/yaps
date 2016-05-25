@@ -47,7 +47,7 @@ trait VertXTarget {
     private void startTargetServer(HttpServer targetServer) {
         CountDownLatch serverRunningSignal = new CountDownLatch(1);
         targetServer.listen(getTargetPort(), { event ->
-            println "Testing target started on port $targetPort"
+            println "Testing target is runnig 'http://localhost:$targetPort'"
             serverRunningSignal.countDown()
         });
         serverRunningSignal.await()
