@@ -61,4 +61,36 @@ class OmitedHeadersTest implements VertXTarget, JettyProxy {
         assert response.headers().get("Resend-This-Header") == ["ResendValueRes"]
 
     }
+
+    @Test(timeout = 1000L)
+    void 'omited headers are case insensitive'() {
+        targetHandler = { req ->
+            assert req.headers().getAll("Trailers") == []
+            assert req.headers().getAll("TrAILers") == []
+            assert req.headers().getAll("Upgrade") == []
+            assert req.headers().getAll("UpgradE") == []
+            assert req.headers().getAll("Resend-This-Header") == ["ResendValueReq"]
+            assert req.headers().getAll("Resend-THIS-Header") == ["ResendValueReq"]
+
+            req.response()
+                    .putHeader("TrAIlers", "Value")
+                    .putHeader("UpgradE", "Value")
+                    .putHeader("Resend-THIS-Header", "ResendValueRes")
+                    .end()
+        }
+
+        Response response = new JdkRequest("$proxyUrl")
+                .header("TrAILers", "Value")
+                .header("UpgradE", "Value")
+                .header("Resend-THIS-Header", "ResendValueReq")
+                .fetch()
+
+        assert response.headers().get("Trailers") == null
+        assert response.headers().get("TrAILers") == null
+        assert response.headers().get("Upgrade") == null
+        assert response.headers().get("UpgradE") == null
+        assert response.headers().get("Resend-THIS-Header") == ["ResendValueRes"]
+    }
+
+
 }
