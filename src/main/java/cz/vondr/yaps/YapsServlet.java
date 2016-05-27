@@ -288,37 +288,50 @@ public class YapsServlet extends HttpServlet {
             unparsedAttributes = setCookieValue.substring(indexOfSemicolon);//including semicolon
         }
 
-
         //TODO set prefix to cookie name
-
-        //replace path
-        if (unparsedAttributes != null) {
-            String unparsedAttributesLowerCase = unparsedAttributes.toLowerCase(Locale.US);
-            String pathString = "path=";
-            int indexOfPath = unparsedAttributesLowerCase.indexOf(pathString);
-            if (indexOfPath != -1) {
-                int endOfPathAttribute = unparsedAttributes.indexOf(";", indexOfPath + pathString.length());
-                if (endOfPathAttribute == -1) {
-                    endOfPathAttribute = unparsedAttributes.length();
-                }
-                unparsedAttributes = unparsedAttributes.substring(0, indexOfPath + pathString.length()) +
-                        newPath +
-                        unparsedAttributes.substring(endOfPathAttribute);
-
-
-            }
-
-        }
-
-
-        //TODO remove domain
-
 
         if (unparsedAttributes == null) {
             return nameValuePair;
         } else {
+            unparsedAttributes = rewritePathInCookie(unparsedAttributes, newPath);
+            unparsedAttributes = removeDomainFromCookie(unparsedAttributes);
             return nameValuePair + unparsedAttributes;
         }
+    }
+
+    private String rewritePathInCookie(String unparsedAttributes, String newPath) {
+        String pathString = "path=";
+        String unparsedAttributesLowerCase = unparsedAttributes.toLowerCase(Locale.US);
+        int indexOfPath = unparsedAttributesLowerCase.indexOf(pathString);
+        if (indexOfPath != -1) {
+            int endOfPathAttribute = unparsedAttributes.indexOf(";", indexOfPath + pathString.length());
+            if (endOfPathAttribute == -1) {
+                endOfPathAttribute = unparsedAttributes.length();
+            }
+            unparsedAttributes = unparsedAttributes.substring(0, indexOfPath + pathString.length())
+                    + newPath
+                    + unparsedAttributes.substring(endOfPathAttribute);
+        }
+        return unparsedAttributes;
+    }
+
+    private String removeDomainFromCookie(String unparsedAttributes) {
+        String domainString = "domain=";
+        String unparsedAttributesLowerCase = unparsedAttributes.toLowerCase(Locale.US);
+        int indexOfDomain = unparsedAttributesLowerCase.indexOf(domainString);
+        if (indexOfDomain != -1) {
+            int endOfDomainAttribute = unparsedAttributes.indexOf(';', indexOfDomain + domainString.length());
+            if (endOfDomainAttribute == -1) {
+                endOfDomainAttribute = unparsedAttributes.length();
+            }
+            int startOfDomainAttribute = unparsedAttributes.lastIndexOf(';', indexOfDomain);
+            if (startOfDomainAttribute == -1) {//only if cookie has invalid format
+                startOfDomainAttribute = indexOfDomain;
+            }
+            unparsedAttributes = unparsedAttributes.substring(0, startOfDomainAttribute)
+                    + unparsedAttributes.substring(endOfDomainAttribute);
+        }
+        return unparsedAttributes;
     }
 
     /*

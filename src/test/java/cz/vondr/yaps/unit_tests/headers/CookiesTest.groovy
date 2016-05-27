@@ -102,12 +102,43 @@ public class CookiesTest implements VertXTarget, JettyProxy {
         def cookieValue = response.headers().get("Set-Cookie")[0]
         assert cookieValue.contains("path=/proxyContextPath")
 
-        assert cookieValue == "JSESSIONID=82AD861ECDA4F81467924ACD2687BE11; path=/proxyContextPath; HttpOnly"
+        assert cookieValue == "CN=Cv; path=/proxyContextPath; HttpOnly"
+    }
+
+    @Test(timeout = 1000L)
+    void 'domain is removed from cookie and works case insensitive'() {
+        targetHandler = { req ->
+            HttpServerResponse response = req.response()
+            response.putHeader("Set-Cookie", "CN=Cv; HttpOnly; DoMAiN=example.com; path=/targetContextPath;")
+            response.end()
+        }
+
+        Response response = new JdkRequest("${proxyUrl}").fetch()
+
+        def cookieValue = response.headers().get("Set-Cookie")[0]
+        assert cookieValue.contains("path=/proxyContextPath")
+
+        assert cookieValue == "CN=Cv; HttpOnly; path=/proxyContextPath;"
+    }
+
+    @Test(timeout = 1000L)
+    void 'domain is removed from cookie even when domain is empty'() {
+        targetHandler = { req ->
+            HttpServerResponse response = req.response()
+            response.putHeader("Set-Cookie", "CN=Cv; Domain=; path=/targetContextPath;")
+            response.end()
+        }
+
+        Response response = new JdkRequest("${proxyUrl}").fetch()
+
+        def cookieValue = response.headers().get("Set-Cookie")[0]
+        assert cookieValue.contains("path=/proxyContextPath")
+
+        assert cookieValue == "CN=Cv; path=/proxyContextPath;"
     }
 
 
-    @Test
-//(timeout = 1000L)
+    @Test(timeout = 1000L)
     void 'multiple SetCookie headers works'() {
         targetHandler = { req ->
             HttpServerResponse response = req.response()
