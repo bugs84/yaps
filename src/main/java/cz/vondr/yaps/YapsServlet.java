@@ -274,44 +274,6 @@ public class YapsServlet extends HttpServlet {
 
         response.addHeader(SET_COOKIE_HEADER, sb.toString());
 
-
-//
-//
-//        //TODO better is parse it on my own but this was quicker to write
-//        //This way change forexample:
-//        //     path=  to Path=
-//        //     and Set-Cookie2  is change to Set-Cookie  :( and so on.
-//        List<HttpCookie> cookies = HttpCookie.parse(header.getValue());
-//        String path = request.getContextPath() + request.getServletPath();
-//        for (HttpCookie cookie : cookies) {
-//            //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
-//            String proxyCookieName = getCookieNamePrefix() + cookie.getName();
-//            Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
-//            servletCookie.setComment(cookie.getComment());
-//            servletCookie.setMaxAge((int) cookie.getMaxAge());
-//            servletCookie.setPath(path); //set to the path of the proxy servlet
-//            // don't set cookie domain
-//            servletCookie.setSecure(cookie.getSecure());
-//            servletCookie.setVersion(cookie.getVersion());
-//            response.addCookie(servletCookie);
-//
-//
-////            Cookie cookie2 = new Cookie("TestCookieName", cookie.getValue());
-////            cookie2.setComment(cookie.getComment());
-////            cookie2.setMaxAge((int) cookie.getMaxAge());
-////            cookie2.setPath(path); //set to the path of the proxy servlet
-////            // don't set cookie domain
-////            cookie2.setSecure(cookie.getSecure());
-////            cookie2.setVersion(cookie.getVersion());
-////            response.addCookie(cookie2);
-//
-//
-//            //xxx test
-////            response.addHeader(SET_COOKIE_HEADER, "cookieTradaa=padaadaaa");
-////            response.addHeader("TestHeader", "HeaderValue");
-//
-//
-//        }
     }
 
     private String rewriteOneParsedCookie(String setCookieValue, String newPath) {
