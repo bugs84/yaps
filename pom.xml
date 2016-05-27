@@ -16,6 +16,14 @@
 
 
     <dependencies>
+        <dependency> <!--Jetty needs new servlet api 3.1 to add cookie-->
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>3.1.0</version>
+            <scope>test</scope>
+        </dependency>
+
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
@@ -51,12 +59,16 @@
             <version>1.10.8</version>
             <scope>test</scope>
         </dependency>
+
+
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
             <version>9.2.2.v20140723</version>
             <scope>test</scope>
         </dependency>
+
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>

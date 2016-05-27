@@ -19,13 +19,23 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class YapsServlet extends HttpServlet {
     private static final char QUERY_DELIMITER = '?';
     private static final String HOST_HEADER = "Host";
+
+    private static final String COOKIE_HEADER = "Cookie";
+    private static final String COOKIE2_HEADER = "Cookie2";
+    private static final String SET_COOKIE_HEADER = "Set-Cookie";
+    private static final String SET_COOKIE2_HEADER = "Set-Cookie2";
+
+
     private static final Set<String> OMITED_HEADERS = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 
     static {
@@ -100,7 +110,6 @@ public class YapsServlet extends HttpServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-
         createHttpClient();
     }
 
@@ -152,34 +161,42 @@ public class YapsServlet extends HttpServlet {
 
     @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        //TODO unit_tests for https  (setup jetty with https)
-        String method = request.getMethod();
-        String rewrittenTargetUri = rewriteUri(request);
-
-        BasicHttpEntityEnclosingRequest targetRequest = new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri);
-        rewriteHeaders(request, targetRequest);
-        CloseableHttpResponse targetResponse = httpClient.execute(targetHttpHost, targetRequest);
         try {
-            //TODO rewrite 'target response' to 'proxy response'
-            response.setStatus(targetResponse.getStatusLine().getStatusCode());
-            rewriteHeaders(targetResponse, response);
-            //TODO test for rewriting body - from proxy request to target request and from target response to proxy response
-            targetResponse.getEntity().writeTo(response.getOutputStream());
-        } finally {
-            targetResponse.close();
-            response.getOutputStream().flush();
-            response.getOutputStream().close();
-        }
+            //TODO unit_tests for https  (setup jetty with https)
+            String method = request.getMethod();
+            String rewrittenTargetUri = rewriteUri(request);
 
+            BasicHttpEntityEnclosingRequest targetRequest = new BasicHttpEntityEnclosingRequest(method, rewrittenTargetUri);
+            rewriteRequestHeaders(request, targetRequest);
+            CloseableHttpResponse targetResponse = httpClient.execute(targetHttpHost, targetRequest);
+            try {
+                //TODO rewrite 'target response' to 'proxy response'
+                response.setStatus(targetResponse.getStatusLine().getStatusCode());
+                rewriteResponseHeaders(request, targetResponse, response);
+                //TODO test for rewriting body - from proxy request to target request and from target response to proxy response
+                targetResponse.getEntity().writeTo(response.getOutputStream());
+            } finally {
+                //TODO mozna zavolat neco jako EntityUtils.consume(targetResponse.getEntity())
+                targetResponse.close();
+                response.getOutputStream().flush();
+                response.getOutputStream().close();
+            }
+
+        } catch (RuntimeException e) {
+            //TODO log exception
+            e.printStackTrace();
+            throw e;
+        }
 
         //TODO multi-part
 
     }
 
-    private void rewriteHeaders(HttpServletRequest request, BasicHttpEntityEnclosingRequest targetRequest) {
+    private void rewriteRequestHeaders(HttpServletRequest request, BasicHttpEntityEnclosingRequest targetRequest) {
         Enumeration headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String headerName = (String) headerNames.nextElement();
+            //TODO solve content-lenght header
             if (OMITED_HEADERS.contains(headerName)) {
                 continue;
             } else if (HOST_HEADER.equalsIgnoreCase(headerName)) {
@@ -191,6 +208,12 @@ public class YapsServlet extends HttpServlet {
             } else {
                 Enumeration<String> headerValues = request.getHeaders(headerName);
                 while (headerValues.hasMoreElements()) {
+
+                    if (COOKIE_HEADER.equalsIgnoreCase(headerName)) {
+                        //TODO rewrite cookie
+                        //TODO COOKIE2_HEADER
+                    }
+
                     String value = headerValues.nextElement();
                     targetRequest.addHeader(headerName, value);
                 }
@@ -198,16 +221,200 @@ public class YapsServlet extends HttpServlet {
         }
     }
 
-    private void rewriteHeaders(CloseableHttpResponse targetResponse, HttpServletResponse response) {
+    private void rewriteResponseHeaders(HttpServletRequest request, CloseableHttpResponse targetResponse, HttpServletResponse response) {
         for (Header header : targetResponse.getAllHeaders()) {
             String headerName = header.getName();
             //TODO test na velikost pismen
             if (OMITED_HEADERS.contains(headerName)) {
                 continue;
+            } else if (SET_COOKIE_HEADER.equalsIgnoreCase(headerName) || SET_COOKIE2_HEADER.equalsIgnoreCase(headerName)) {
+                rewriteCookieHeader(request, response, header);
             } else {
                 response.addHeader(headerName, header.getValue());
             }
         }
+    }
+
+    private void rewriteCookieHeader(HttpServletRequest request, HttpServletResponse response, Header header) {
+
+        String newPath = request.getContextPath() + request.getServletPath();
+
+        //parsing by
+        // https://tools.ietf.org/html/rfc6265#section-4.1.1
+        // https://tools.ietf.org/html/rfc6265#section-5.2
+
+//        http://www.ietf.org/rfc/rfc2109.txt  4.2.2
+
+        String headerValue = header.getValue();
+        int version = guessCookieVersion(headerValue);
+
+        List<String> cookies;
+
+        if (version == 0) {
+            cookies = new ArrayList<String>(1);
+            cookies.add(headerValue);
+            // Netscape draft cookie
+        } else {
+            // rfc2965/2109 cookie
+            // if header string contains more than one cookie,
+            // it'll separate them with comma
+            cookies = splitMultiCookies(headerValue);
+        }
+
+
+        for (int i = 0; i < cookies.size(); i++) {
+            cookies.set(i, rewriteOneParsedCookie(cookies.get(i), newPath));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(cookies.get(0));
+        for (int i = 1; i < cookies.size(); i++) {
+            sb.append(",").append(cookies.get(i));
+        }
+
+        response.addHeader(SET_COOKIE_HEADER, sb.toString());
+
+
+//
+//
+//        //TODO better is parse it on my own but this was quicker to write
+//        //This way change forexample:
+//        //     path=  to Path=
+//        //     and Set-Cookie2  is change to Set-Cookie  :( and so on.
+//        List<HttpCookie> cookies = HttpCookie.parse(header.getValue());
+//        String path = request.getContextPath() + request.getServletPath();
+//        for (HttpCookie cookie : cookies) {
+//            //set cookie name prefixed w/ a proxy value so it won't collide w/ other cookies
+//            String proxyCookieName = getCookieNamePrefix() + cookie.getName();
+//            Cookie servletCookie = new Cookie(proxyCookieName, cookie.getValue());
+//            servletCookie.setComment(cookie.getComment());
+//            servletCookie.setMaxAge((int) cookie.getMaxAge());
+//            servletCookie.setPath(path); //set to the path of the proxy servlet
+//            // don't set cookie domain
+//            servletCookie.setSecure(cookie.getSecure());
+//            servletCookie.setVersion(cookie.getVersion());
+//            response.addCookie(servletCookie);
+//
+//
+////            Cookie cookie2 = new Cookie("TestCookieName", cookie.getValue());
+////            cookie2.setComment(cookie.getComment());
+////            cookie2.setMaxAge((int) cookie.getMaxAge());
+////            cookie2.setPath(path); //set to the path of the proxy servlet
+////            // don't set cookie domain
+////            cookie2.setSecure(cookie.getSecure());
+////            cookie2.setVersion(cookie.getVersion());
+////            response.addCookie(cookie2);
+//
+//
+//            //xxx test
+////            response.addHeader(SET_COOKIE_HEADER, "cookieTradaa=padaadaaa");
+////            response.addHeader("TestHeader", "HeaderValue");
+//
+//
+//        }
+    }
+
+    private String rewriteOneParsedCookie(String setCookieValue, String newPath) {
+
+        int indexOfSemicolon = setCookieValue.indexOf(";");
+        String nameValuePair;
+        String unparsedAttributes = null;
+        if (indexOfSemicolon == -1) {
+            nameValuePair = setCookieValue;
+        } else {
+            nameValuePair = setCookieValue.substring(0, indexOfSemicolon);
+            unparsedAttributes = setCookieValue.substring(indexOfSemicolon);//including semicolon
+        }
+
+
+        //TODO set prefix to cookie name
+
+        //replace path
+        if (unparsedAttributes != null) {
+            String unparsedAttributesLowerCase = unparsedAttributes.toLowerCase(Locale.US);
+            String pathString = "path=";
+            int indexOfPath = unparsedAttributesLowerCase.indexOf(pathString);
+            if (indexOfPath != -1) {
+                int endOfPathAttribute = unparsedAttributes.indexOf(";", indexOfPath + pathString.length());
+                if (endOfPathAttribute == -1) {
+                    endOfPathAttribute = unparsedAttributes.length();
+                }
+                unparsedAttributes = unparsedAttributes.substring(0, indexOfPath + pathString.length()) +
+                        newPath +
+                        unparsedAttributes.substring(endOfPathAttribute);
+
+
+            }
+
+        }
+
+
+        //TODO remove domain
+
+
+        if (unparsedAttributes == null) {
+            return nameValuePair;
+        } else {
+            return nameValuePair + unparsedAttributes;
+        }
+    }
+
+    /*
+     * try to guess the cookie version through set-cookie header string
+     * copied from java.net.HttpCookie
+     */
+    private static int guessCookieVersion(String header) {
+        int version = 0;
+        header = header.toLowerCase();
+        if (header.indexOf("expires=") != -1) {
+            // only netscape cookie using 'expires'
+            version = 0;
+        } else if (header.indexOf("version=") != -1) {
+            // version is mandatory for rfc 2965/2109 cookie
+            version = 1;
+        } else if (header.indexOf("max-age") != -1) {
+            // rfc 2965/2109 use 'max-age'
+            version = 1;
+        }
+        return version;
+    }
+
+    /*
+         * Split cookie header string according to rfc 2965:
+         *   1) split where it is a comma;
+         *   2) but not the comma surrounding by double-quotes, which is the comma
+         *      inside port list or embeded URIs.
+         *
+         * @param  header
+         *         the cookie header string to split
+         *
+         * @return  list of strings; never null
+         */
+    private static List<String> splitMultiCookies(String header) {
+        List<String> cookies = new java.util.ArrayList<String>();
+        int quoteCount = 0;
+        int p, q;
+
+        for (p = 0, q = 0; p < header.length(); p++) {
+            char c = header.charAt(p);
+            if (c == '"') quoteCount++;
+            if (c == ',' && (quoteCount % 2 == 0)) {
+                // it is comma and not surrounding by double-quotes
+                cookies.add(header.substring(q, p));
+                q = p + 1;
+            }
+        }
+
+        cookies.add(header.substring(q));
+
+        return cookies;
+    }
+
+
+    private String getCookieNamePrefix() {
+        //TODO implement
+        return "!yaps!";
+//        return "";
     }
 
     private String rewriteUri(HttpServletRequest request) {

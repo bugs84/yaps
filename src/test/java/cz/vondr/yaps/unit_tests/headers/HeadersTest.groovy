@@ -144,6 +144,22 @@ class HeadersTest implements VertXTarget, JettyProxy {
     }
 
     @Test(timeout = 1000L)
+    void 'multiple headers with the same name are resend from request'() {
+        targetHandler = { req ->
+            List<String> testHeaderValues = req.headers().getAll("TestHeader")
+            assert testHeaderValues.size() == 2
+            assert testHeaderValues[0] == "Value 1"
+            assert testHeaderValues[1] == "Value 2"
+            req.response().end()
+        }
+
+        new JdkRequest("$proxyUrl")
+                .header("TestHeader", "Value 1")
+                .header("TestHeader", "Value 2")
+                .fetch().headers()
+    }
+
+    @Test(timeout = 1000L)
     void 'multiple headers with the same name are resend from response'() {
         targetHandler = { req ->
             def response = req.response()
