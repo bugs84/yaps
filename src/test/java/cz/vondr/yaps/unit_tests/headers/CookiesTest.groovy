@@ -2,6 +2,7 @@ package cz.vondr.yaps.unit_tests.headers
 
 import com.jcabi.http.Response
 import com.jcabi.http.request.JdkRequest
+import cz.vondr.yaps.YapsServlet
 import cz.vondr.yaps.unit_tests.tool.JettyProxy
 import cz.vondr.yaps.unit_tests.tool.VertXTarget
 import org.junit.Test
@@ -17,6 +18,11 @@ public class CookiesTest implements VertXTarget, JettyProxy {
     @Override
     String getTargetContextPath() {
         "/targetContextPath"
+    }
+
+    @Override
+    void configure(YapsServlet yapsServlet) {
+        yapsServlet.setCookiePrefix("")
     }
 
     @Test(timeout = 1000L)

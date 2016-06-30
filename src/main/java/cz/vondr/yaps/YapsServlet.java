@@ -38,6 +38,8 @@ public class YapsServlet extends HttpServlet {
 
     private static final Set<String> OMITED_HEADERS = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
 
+    private static final String SERVLET_NAME_VARIABLE = "${SERVLET_NAME}";
+
     static {
         //viz. https://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
         //End-to-end and Hop-by-hop Headers
@@ -62,13 +64,15 @@ public class YapsServlet extends HttpServlet {
 
     protected CloseableHttpClient httpClient;
 
-    protected String targetUri = "http://www.idnes.cz";
+    protected String targetUri = "http://www.idnes.cz";//todo remove idnes
 
     protected String targetSchema = "http";
     protected String targetHost = "www.idnes.cz";//todo target host
     protected int targetPort = 80;//-1 if port is undefined
     protected HttpHost targetHttpHost = new HttpHost(targetHost, targetPort);
+    protected String cookiePrefix = "!yaps!" + SERVLET_NAME_VARIABLE + "!";
 
+    private String resolvedCookiePrefix;
 
     public String getTargetSchema() {
         return targetSchema;
@@ -99,6 +103,29 @@ public class YapsServlet extends HttpServlet {
         return this;
     }
 
+    public String getCookiePrefix() {
+        return cookiePrefix;
+    }
+
+
+    /**
+     * Proxy replaces cookie path to local path and renames cookie to avoid collisions.  <br>
+     * By this method prefix used to rename cookie can be specified. <br>
+     * <p>
+     * <p>
+     * This set cookie prefix. <br>
+     * Default value is "!yaps!${SERVLET_NAME}!". <br>
+     * If this value contains String "${SERVLET_NAME}", than this string is replaced by servlet name. <br>
+     * If you set this value to empty String ("") no prefix is added to cookies. <br>
+     */
+    public YapsServlet setCookiePrefix(String cookiePrefix) {
+        if (cookiePrefix == null) {
+            throw new IllegalArgumentException("cookiePrefix cannot be null");
+        }
+        this.cookiePrefix = cookiePrefix;
+        return this;
+    }
+
     private URI parseUri(String targetUri) {
         try {
             return new URI(targetUri);
@@ -111,6 +138,11 @@ public class YapsServlet extends HttpServlet {
     public void init() throws ServletException {
         super.init();
         createHttpClient();
+        setupCookiePrefix();
+    }
+
+    private void setupCookiePrefix() {
+        resolvedCookiePrefix = cookiePrefix.replace(SERVLET_NAME_VARIABLE, getServletConfig().getServletName());
     }
 
     private void createHttpClient() {
@@ -288,7 +320,8 @@ public class YapsServlet extends HttpServlet {
             unparsedAttributes = setCookieValue.substring(indexOfSemicolon);//including semicolon
         }
 
-        //TODO set prefix to cookie name
+        //Add cookie prefix
+        nameValuePair = resolvedCookiePrefix + nameValuePair;
 
         if (unparsedAttributes == null) {
             return nameValuePair;
@@ -383,13 +416,6 @@ public class YapsServlet extends HttpServlet {
         cookies.add(header.substring(q));
 
         return cookies;
-    }
-
-
-    private String getCookieNamePrefix() {
-        //TODO implement
-        return "!yaps!";
-//        return "";
     }
 
     private String rewriteUri(HttpServletRequest request) {
