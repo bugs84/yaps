@@ -16,6 +16,10 @@ trait JettyProxy {
 
     abstract int getTargetPort()
 
+    public String getServletName() {
+        "yaps-test"
+    }
+
     public String getProxyContextPath() {
         "/"
     }
@@ -39,7 +43,7 @@ trait JettyProxy {
     }
 
     private void setupYapsServlet(ServletContextHandler handler) {
-        def servletHolder = new ServletHolder(new YapsServlet().setTargetUri("http://localhost:${getTargetPort()}${getTargetContextPath()}"))
+        def servletHolder = new ServletHolder(getServletName(), new YapsServlet().setTargetUri("http://localhost:${getTargetPort()}${getTargetContextPath()}"))
         handler.setContextPath(getProxyContextPath())
         handler.addServlet(servletHolder, "/*")
     }
